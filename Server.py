@@ -2,13 +2,19 @@
 
 import socket
 import sys
+import requests
+import json
+import datetime
 
 class Server:
 	'''demonstration class only
 		- coded for clarity, not efficiency
 	'''
 	
+	# Constants
 	MSGLEN = 16
+	SERVER_URL = 'http://requestb.in/xisfixxi'
+	ID = 12345
 
 	def __init__(self, sock=None):
 		if sock is None:
@@ -38,8 +44,18 @@ class Server:
 					data = connection.recv(16)
 					print >>sys.stderr, 'received "%s"' % data
 					if data:
-						print >>sys.stderr, 'sending data back to the client'
-						connection.sendall(data)
+						# print >>sys.stderr, 'sending data back to the client'
+						connection.sendall('ok')
+
+						payload = []
+						
+						# If open
+						if data == '1':
+							payload = self.pack_json(True)
+						else:
+							payload = self.pack_json(False)
+							
+						self.server_post(payload)
 					else:
 						print >>sys.stderr, 'no more data from', client_address
 						break
@@ -47,6 +63,33 @@ class Server:
 			finally:
 				# Clean up the connection
 				connection.close()
+
+	# Create JSON file to send to Django				
+	def pack_json(self, open):
+
+		# Get current time
+		date = datetime.datetime.now()
+		
+		# Create payload data
+		data = [ {
+		  "id": self.ID,
+		  "open": open,
+		  "datetime": {
+			"second": date.second,
+			"minute": date.minute,
+			"hour": date.hour,
+			"day": date.day,
+			"month": date.month,
+			"year": date.year
+		  }
+		} ]
+		
+		return json.dumps(data)
+				
+	def server_post(self, payload):
+		r = requests.post(self.SERVER_URL, data = payload)
+		print "Status: ", r.status_code
+		
 
 # 	def mysend(self, msg, connection):
 # 		totalsent = 0
@@ -66,6 +109,6 @@ class Server:
 # 			print >>sys.stderr, 'no more data from', client_address
 
 a_socket = Server()
-a_socket.connect('localhost', 10000)
+a_socket.connect('localhost', 10500)
 a_socket.loop()
 
