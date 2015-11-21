@@ -15,7 +15,7 @@ class Server:
 	
 	# Constants
 	MSGLEN = 16
-	SERVER_URL = 'http://requestb.in/13xpvv71'
+	SERVER_URL = 'https://httpbin.org'
 	ID = 12345
 
 	def __init__(self, sock=None):
@@ -32,8 +32,8 @@ class Server:
 		self.sock.bind(server_address)
 		self.sock.listen(1)
 		
-	def loop(self):
-		while True:
+	def loop(self, arg1, stop_event):
+		while (not stop_event.is_set()):
 			# Wait for a connection
 			print >>sys.stderr, 'waiting for a connection'
 			connection, client_address = self.sock.accept()
@@ -65,6 +65,7 @@ class Server:
 			finally:
 				# Clean up the connection
 				connection.close()
+			pass
 
 	# Create JSON file to send to Django				
 	def pack_json(self, open):
@@ -92,10 +93,13 @@ class Server:
 		r = requests.post(self.SERVER_URL, data = payload)
 		print "Status: ", r.status_code
 
-	def get_stuff(self):
-		while True:
-			print "Get!"
+	def get_stuff(self, arg1, stop_event):
+		while (not stop_event.is_set()):
+			r = requests.get(self.SERVER_URL)
+			decoded = json.loads(r.text)
+			print >>sys.stderr, 'Got "%s"\n' % decoded
 			time.sleep(5)
+			pass
 
 # 	def mysend(self, msg, connection):
 # 		totalsent = 0
@@ -114,14 +118,28 @@ class Server:
 # 		else:
 # 			print >>sys.stderr, 'no more data from', client_address
 
-a_socket = Server()
-a_socket.connect('localhost', 10500)
-a_socket.loop()
+while True:
+	a_socket = Server()
+	a_socket.connect('localhost', 10500)
 
-# t = threading.Thread(name='my_service', target=a_socket.more_stuff())
-w = threading.Thread(name='worker', target=a_socket.get_stuff())
-# w2 = threading.Thread(target=worker) # use default name
+	threads = [] 
 
-w.start()
-# w2.start()
-# t.start()
+	t1_stop = threading.Event()
+	t1 = threading.Thread(target = a_socket.loop, args=(1, t1_stop))
+
+	t2_stop = threading.Event()
+	t2 = threading.Thread(target = a_socket.get_stuff, args=(2, t2_stop))
+
+	t1.setDaemon(True)
+	t2.setDaemon(True)
+
+	threads.append(t1)
+	threads.append(t2)
+
+	t1.start()
+	t2.start()
+
+	for x in threads: 
+		x.join()
+		
+	print "Done"

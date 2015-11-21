@@ -1,30 +1,9 @@
 #!/usr/bin/python
 
-# from thread import start_new_thread
-# import time
-# 
-# class Server:
-# 	def one(self, x):
-# 		while True:
-# 			print 'one ' + str(x)
-# 			time.sleep(5)
-# 	def two(self, x):
-# 		while True:
-# 			print 'two' + str(x)
-# 			time.sleep(6)
-# 
-# server = Server()
-# start_new_thread(server.one(), (,1))
-# start_new_thread(server.one(), (,2))
-# 
-# c = raw_input("Type something to quit.")
-
 import threading
 import time
 
 print_lock = threading.Lock()
-# stop_lock = threading.Lock()
-# stop = False
 
 def runA(arg1, stop_event):
 	while (not stop_event.is_set()):
@@ -39,7 +18,6 @@ def runB(arg1, stop_event):
 	input = 0
 	while (not stop_event.is_set()):
 		input += 1
-		print "Count in B: " + str(input) + "\n"
 		if input == 5:
 			stop_event.set()
 		else:
@@ -74,7 +52,3 @@ if __name__ == "__main__":
 		x.join()
 		
 	print "Done"
-		
-# 	input = long(raw_input("number: ")) 
-# 	if input == 1: 
-# 		break 
