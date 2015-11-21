@@ -5,6 +5,8 @@ import sys
 import requests
 import json
 import datetime
+import time
+import threading
 
 class Server:
 	'''demonstration class only
@@ -13,7 +15,7 @@ class Server:
 	
 	# Constants
 	MSGLEN = 16
-	SERVER_URL = 'http://requestb.in/xisfixxi'
+	SERVER_URL = 'http://requestb.in/13xpvv71'
 	ID = 12345
 
 	def __init__(self, sock=None):
@@ -89,7 +91,11 @@ class Server:
 	def server_post(self, payload):
 		r = requests.post(self.SERVER_URL, data = payload)
 		print "Status: ", r.status_code
-		
+
+	def get_stuff(self):
+		while True:
+			print "Get!"
+			time.sleep(5)
 
 # 	def mysend(self, msg, connection):
 # 		totalsent = 0
@@ -112,3 +118,10 @@ a_socket = Server()
 a_socket.connect('localhost', 10500)
 a_socket.loop()
 
+# t = threading.Thread(name='my_service', target=a_socket.more_stuff())
+w = threading.Thread(name='worker', target=a_socket.get_stuff())
+# w2 = threading.Thread(target=worker) # use default name
+
+w.start()
+# w2.start()
+# t.start()
