@@ -7,6 +7,7 @@ import json
 import datetime
 import time
 import threading
+import urllib2
 
 class Server:
 	'''demonstration class only
@@ -15,7 +16,9 @@ class Server:
 	
 	# Constants
 	MSGLEN = 16
-	SERVER_URL = 'https://httpbin.org'
+	# SERVER_URL = 'https://httpbin.org'
+	SERVER_URL = 'http://127.0.0.1:8000/log/'
+
 	ID = 12345
 
 	def __init__(self, sock=None):
@@ -49,7 +52,7 @@ class Server:
 						# print >>sys.stderr, 'sending data back to the client'
 						connection.sendall('ok')
 
-						payload = []
+						payload = {}
 						
 						# If open
 						if data == '1':
@@ -57,6 +60,7 @@ class Server:
 						else:
 							payload = self.pack_json(False)
 							
+						print payload
 						self.server_post(payload)
 					else:
 						print >>sys.stderr, 'no more data from', client_address
@@ -74,32 +78,28 @@ class Server:
 		date = datetime.datetime.now()
 		
 		# Create payload data
-		data = [ {
-		  "id": self.ID,
-		  "open": open,
-		  "datetime": {
-			"second": date.second,
-			"minute": date.minute,
-			"hour": date.hour,
-			"day": date.day,
-			"month": date.month,
-			"year": date.year
-		  }
-		} ]
+		data = {
+		  "log_id": self.ID,
+		  "log_open": open,
+		  "log_date": str(date)
+		}
 		
-		return json.dumps(data)
+		# return json.dumps(data)
+		return data
 				
 	def server_post(self, payload):
-		r = requests.post(self.SERVER_URL, data = payload)
+		r = requests.post(self.SERVER_URL, json = payload)
 		print "Status: ", r.status_code
+		print r.content
 
 	def get_stuff(self, arg1, stop_event):
-		while (not stop_event.is_set()):
-			r = requests.get(self.SERVER_URL)
-			decoded = json.loads(r.text)
-			print >>sys.stderr, 'Got "%s"\n' % decoded
-			time.sleep(5)
-			pass
+		pass
+		# while (not stop_event.is_set()):
+		# 	r = requests.get(self.SERVER_URL)
+		# 	decoded = json.loads(r.text)
+		# 	print >>sys.stderr, 'Got "%s"\n' % decoded
+		# 	time.sleep(5)
+		# 	pass
 
 # 	def mysend(self, msg, connection):
 # 		totalsent = 0
@@ -143,3 +143,4 @@ while True:
 		x.join()
 		
 	print "Done"
+	time.sleep(120)
