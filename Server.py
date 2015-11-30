@@ -8,6 +8,7 @@ import datetime
 import time
 import threading
 import urllib2
+# from pytz import timezone
 
 class Server:
 	'''demonstration class only
@@ -17,7 +18,11 @@ class Server:
 	# Constants
 	MSGLEN = 16
 	# SERVER_URL = 'https://httpbin.org'
-	SERVER_URL = 'http://127.0.0.1:8000/log/'
+	SERVER_URL = 'http://dilts.koding.io:8000/log/'
+
+	max_distance = 20.0
+	current_distance = 0.0
+	was_open = False
 
 	ID = 12345
 
@@ -48,20 +53,32 @@ class Server:
 				while True:
 					data = connection.recv(16)
 					print >>sys.stderr, 'received "%s"' % data
+					data = data.rstrip('\n')
 					if data:
 						# print >>sys.stderr, 'sending data back to the client'
 						connection.sendall('ok')
 
 						payload = {}
-						
-						# If open
-						if data == '1':
-							payload = self.pack_json(True)
+
+						if data < self.max_distance:
+							# door is closed
+							if self.was_open == True:
+								#Door state has changed!!
+								self.was_open = False
+								payload = self.pack_json(False)
+
+								#print payload
+								self.server_post(payload)
 						else:
-							payload = self.pack_json(False)
-							
-						print payload
-						self.server_post(payload)
+							#door is open!
+							if self.was_open == False:
+								#Door state has changed!!
+								self.was_open = True
+								payload = self.pack_json(True)
+
+								#print payload
+								self.server_post(payload)
+						
 					else:
 						print >>sys.stderr, 'no more data from', client_address
 						break
@@ -76,6 +93,7 @@ class Server:
 
 		# Get current time
 		date = datetime.datetime.now()
+		# t = pytz.timezone('America/Fortaleza').localize(date)
 		
 		# Create payload data
 		data = {
@@ -88,9 +106,10 @@ class Server:
 		return data
 				
 	def server_post(self, payload):
+		print str(payload)
 		r = requests.post(self.SERVER_URL, json = payload)
 		print "Status: ", r.status_code
-		print r.content
+		#print r.content
 
 	def get_stuff(self, arg1, stop_event):
 		pass
